@@ -57,27 +57,55 @@
         height: 500px;
         position: absolute;
     }
-</style>
 
-<div id="container" class="small-form">
-    <form class="wrapper" id="imageForm" method="POST">
-        <h2>Favor de insertar el link para el análisis</h2>
-        <input name="shingeSumare" type="url" placeholder="Url" required class="input" id="imageUrl">
-        <button class="button" type="submit">Submit</button>
-    </form>
-    <div class="image-container" id="imageContainer"></div>
-</div>
+    .loader {
+            border: 8px solid #f3f3f3; /* Light grey */
+            border-top: 8px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            display: none; /* Hidden by default */
+            position: absolute;
+            top: 25%;
+            left: 49%;
+            transform: translate(-30%, -50%);
+        }
 
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const imageForm: HTMLFormElement = document.getElementById("imageForm") as HTMLFormElement;
-        if(imageForm){
-            imageForm.addEventListener("submit", async(event): Promise<void> => {
-                event.preventDefault();
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="small-form">
+        <form class="wrapper" id="imageForm">
+            <h2>Favor de insertar el link para el análisis</h2>
+            <input type="url" placeholder="Url" required class="input" id="imageUrl">
+            <button class="button" type="submit">Submit</button>
+        </form>
+        <div class="image-container" id="imageContainer"></div>
+        <div class="loader" id="loader"></div>
+    </div>
 
-                const formData: FormData = new FormData(imageForm);
-                const urlForm: FormDataEntryValue = formData.get("shingeSumare") as FormDataEntryValue;
-                console.log(urlForm);
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const imageForm = document.getElementById("imageForm") as HTMLFormElement;
+            const loader = document.getElementById("loader") as HTMLDivElement;
+            const imageContainer = document.getElementById("imageContainer") as HTMLDivElement;
+
+            if (imageForm) {
+                imageForm.addEventListener("submit", async (event) => {
+                    event.preventDefault();
+
+                    const formData = new FormData(imageForm);
+                    const urlForm = formData.get("shingeSumare") as FormDataEntryValue;
+                    console.log(urlForm);
+
+                    
+                    loader.style.display = "block";
+                    imageContainer.innerHTML = ""; 
 
                 try{
                     const response: Response = await fetch("http://localhost:8083/Analize", {
@@ -99,6 +127,8 @@
                     }
                 }catch(error){
                     console.error("Error en la solicitud:", error);
+                } finally {
+                    loader.style.display = "none"
                 }
             });
         }
