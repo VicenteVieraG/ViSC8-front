@@ -1,0 +1,100 @@
+---
+if(Astro.request.method === "POST"){
+    try {
+        const data: FormData = await Astro.request.formData();
+        const urlForm = data.get("shingeSumare");
+
+        const response: Response | void = await fetch("http://0.0.0.0:8083/Analize", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({url: urlForm})
+        });
+
+        if (response.ok) {
+            console.log(response.url)
+            const text = await response.text();
+            const blob = new Blob([text], { type: 'text/plain' });
+            const fileUrl = URL.createObjectURL(blob);
+
+            // Crear un enlace de descarga y simular un clic
+            const downloadLink = document.createElement('a');
+            downloadLink.href = fileUrl;
+            downloadLink.download = 'response.txt';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    } catch (error) {
+        console.error('Error en la solicitud:', error);
+    }
+}
+---
+
+<style>
+    .wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 300px;
+        margin: 80px auto 0;
+        background: transparent;
+        border: 2px solid rgba(0, 0, 0, 0.2);
+        padding: 30px 40px;
+        border-radius: 10px;
+        backdrop-filter: blur(20px);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    h2 {
+        color: #78CAD5;
+        font-size: 1.5em;
+    }
+
+    .button {
+        background-color: hsl(278, 77%, 74%, .2);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        margin-top: 20px;
+        padding: 10px 20px;
+    }
+
+    .input {
+        border: 1px solid black;
+        border-radius: 100px;
+        text-align: center;
+        margin-bottom: 20px;
+        margin-top: 20px;
+        width: 95%;
+    }
+
+    .image-container {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .image-container img {
+        max-width: 100%;
+        width: 150px; /* Adjust this value to control the width of the image */
+        height: auto;
+        border-radius: 10px;
+    }
+
+    img {
+        width: 500px;
+        height: 500px;
+        position: absolute;
+    }
+</style>
+
+<div id="container" class="small-form">
+    <form class="wrapper" id="imageForm" method="POST" set:html="">
+        <h2>Favor de insertar el link para el análisis</h2>
+        <input name="shingeSumare" type="url" placeholder="Url" required class="input" id="imageUrl">
+        <button class="button" type="submit">Submit</button>
+    </form>
+    <div class="image-container" id="imageContainer"></div>
+</div>
