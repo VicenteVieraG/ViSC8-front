@@ -1,35 +1,4 @@
 ---
-if(Astro.request.method === "POST"){
-    try {
-        const data: FormData = await Astro.request.formData();
-        const urlForm = data.get("shingeSumare");
-
-        const response: Response | void = await fetch("http://0.0.0.0:8083/Analize", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({url: urlForm})
-        });
-
-        if (response.ok) {
-            console.log(response.url)
-            const text = await response.text();
-            const blob = new Blob([text], { type: 'text/plain' });
-            const fileUrl = URL.createObjectURL(blob);
-
-            // Crear un enlace de descarga y simular un clic
-            const downloadLink = document.createElement('a');
-            downloadLink.href = fileUrl;
-            downloadLink.download = 'response.txt';
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-        }
-    } catch (error) {
-        console.error('Error en la solicitud:', error);
-    }
-}
 ---
 
 <style>
@@ -79,7 +48,7 @@ if(Astro.request.method === "POST"){
     .image-container img {
         max-width: 100%;
         width: 150px; /* Adjust this value to control the width of the image */
-        height: auto;
+        height: 150px;
         border-radius: 10px;
     }
 
@@ -91,10 +60,47 @@ if(Astro.request.method === "POST"){
 </style>
 
 <div id="container" class="small-form">
-    <form class="wrapper" id="imageForm" method="POST" set:html="">
+    <form class="wrapper" id="imageForm" method="POST">
         <h2>Favor de insertar el link para el análisis</h2>
         <input name="shingeSumare" type="url" placeholder="Url" required class="input" id="imageUrl">
         <button class="button" type="submit">Submit</button>
     </form>
     <div class="image-container" id="imageContainer"></div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const imageForm: HTMLFormElement = document.getElementById("imageForm") as HTMLFormElement;
+        if(imageForm){
+            imageForm.addEventListener("submit", async(event): Promise<void> => {
+                event.preventDefault();
+
+                const formData: FormData = new FormData(imageForm);
+                const urlForm: FormDataEntryValue = formData.get("shingeSumare") as FormDataEntryValue;
+                console.log(urlForm);
+
+                try{
+                    const response: Response = await fetch("http://localhost:8083/Analize", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ url: urlForm })
+                    });
+
+                    if(response.ok){
+                        const blob = await response.blob();
+                        const imageUrl = URL.createObjectURL(blob);
+
+                        const imageContainer: HTMLDivElement = document.getElementById("imageContainer") as HTMLDivElement;
+                        imageContainer.innerHTML = `<img src="${imageUrl}" alt="Analyzed Image" />`;
+                    }else{
+                        console.error("Error en la solicitud:", response.statusText);
+                    }
+                }catch(error){
+                    console.error("Error en la solicitud:", error);
+                }
+            });
+        }
+    });
+</script>
