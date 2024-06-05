@@ -1,34 +1,62 @@
 ---
+import Header from "./Header.astro";
+import Spinner from "./Spinner.astro";
 ---
 
 <style>
-    .wrapper {
+    #fragment {
+        width: 100%;
+        height: 100%;
         display: flex;
         flex-direction: column;
+        justify-content: space-between;
+    }
+    #fragment img {
+        height: 0;
+        object-fit: contain;
+        margin: 0 auto;
+        z-index: 1;
+    }
+
+    .form {
+        height: 50%;
+        max-width: 400px;
+        max-height: 400px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
         align-items: center;
-        justify-content: center;
-        width: 300px;
-        margin: 80px auto 0;
         background: transparent;
         border: 2px solid rgba(0, 0, 0, 0.2);
-        padding: 30px 40px;
         border-radius: 10px;
         backdrop-filter: blur(20px);
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     }
 
     h2 {
+        width: 100%;
+        height: fit-content;
+        text-align: center;
         color: #78CAD5;
         font-size: 1.5em;
     }
 
     .button {
-        background-color: hsl(278, 77%, 74%, .2);
+        width: 40%;
+        height: 50px;
+        background-color: rgba(32, 58, 67, 0.5);
         color: white;
         border: none;
         border-radius: 8px;
-        margin-top: 20px;
-        padding: 10px 20px;
+        transition-property: all;
+        transition-duration: 500ms;
+        transition-timing-function: ease-in-out;
+    }
+    .button:hover {
+        transform: scale(1.1);
+        box-shadow: 0px 0px 1px 1px black;
+        background-color: rgb(32, 58, 67);
     }
 
     .input {
@@ -39,68 +67,62 @@
         margin-top: 20px;
         width: 95%;
     }
-
-    .image-container {
-        margin-top: 20px;
-        text-align: center;
-    }
-
-    .image-container img {
-        max-width: 100%;
-        width: 150px; /* Adjust this value to control the width of the image */
-        height: 150px;
-        border-radius: 10px;
-    }
-
-    img {
-        width: 500px;
-        height: 500px;
-        position: absolute;
-    }
 </style>
 
-<div id="container" class="small-form">
-    <form class="wrapper" id="imageForm" method="POST">
+<div id="fragment">
+    <Header title="ViSC8"/>
+    <form id="imageForm" method="POST" class="form">
         <h2>Favor de insertar el link para el análisis</h2>
-        <input name="shingeSumare" type="url" placeholder="Url" required class="input" id="imageUrl">
+        <input id="formInput" name="shingeSumare" type="url" placeholder="Url" required class="input" id="imageUrl">
         <button class="button" type="submit">Submit</button>
     </form>
-    <div class="image-container" id="imageContainer"></div>
+    <img
+        id="image"
+        src={null}
+        alt=""
+    >
+    <Spinner />
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         const imageForm: HTMLFormElement = document.getElementById("imageForm") as HTMLFormElement;
-        if(imageForm){
-            imageForm.addEventListener("submit", async(event): Promise<void> => {
-                event.preventDefault();
+        const spinner: HTMLDivElement = document.getElementById("spinner") as HTMLDivElement;
+        const formInput: HTMLInputElement = document.getElementById("formInput") as HTMLInputElement;
 
-                const formData: FormData = new FormData(imageForm);
-                const urlForm: FormDataEntryValue = formData.get("shingeSumare") as FormDataEntryValue;
-                console.log(urlForm);
+        imageForm.addEventListener("submit", async(event: SubmitEvent): Promise<void> => {
+            event.preventDefault();
+            spinner.style.display = "block";
 
-                try{
-                    const response: Response = await fetch("http://localhost:8083/Analize", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({ url: urlForm })
-                    });
+            const formData: FormData = new FormData(imageForm);
+            const urlForm: FormDataEntryValue  = formData.get("shingeSumare") as FormDataEntryValue;
+            formInput.value = "";
 
-                    if(response.ok){
-                        const blob = await response.blob();
-                        const imageUrl = URL.createObjectURL(blob);
+            try {
+                const response: Response = await fetch("http://localhost:8083/Analize", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ url: urlForm })
+                });
 
-                        const imageContainer: HTMLDivElement = document.getElementById("imageContainer") as HTMLDivElement;
-                        imageContainer.innerHTML = `<img src="${imageUrl}" alt="Analyzed Image" />`;
-                    }else{
-                        console.error("Error en la solicitud:", response.statusText);
-                    }
-                }catch(error){
-                    console.error("Error en la solicitud:", error);
+                if(response.ok) {
+                    const blob: Blob = await response.blob();
+                    const imageUrl: string = URL.createObjectURL(blob);
+
+                    const imageContainer: HTMLImageElement = document.getElementById("image") as HTMLImageElement;
+                    imageContainer.style.height = "400px";
+                    imageContainer.src = imageUrl;
+                    imageContainer.alt = "Analized Image";
+                } else {
+                    console.error("Error en la solicitud:", response.statusText);
                 }
-            });
-        }
+            }catch(error) {
+                console.error("Error en la solicitud:", error);
+            }finally {
+                if(spinner) spinner.style.display = "none";
+            }
+        });
     });
 </script>
